@@ -4,3 +4,4 @@ transformers
 arabert
 fastapi
 uvicorn[standard]
+tensorflow
