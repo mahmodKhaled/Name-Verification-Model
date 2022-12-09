@@ -8,6 +8,13 @@ For example:
 1. The name "باسم وحيد السيد" is a real name with high confidence.
 2. The name "باسمم وحةد السد" “is a real name with low confidence.
 
+## Datasets Source Links
+The datasets source is the same source you provided to me in the task description PDF
+
+```
+https://drive.google.com/drive/folders/1rW6vtJ_niYLao1YrYD0D4psAaqt0tMyh
+```
+
 ## Instructions
 
 ### How to build the docker image
