@@ -30,6 +30,27 @@ def model_init():
 
 # transform data
 def transform_data(X,y):
+  """
+    Transforms input data for use in a model.
+
+    Parameters:
+    - X: A Pandas DataFrame containing the input data. The DataFrame must have the following structure:
+    {
+      'Name': list of names (strings)
+    }
+    - y: (Optional) A Pandas DataFrame containing the labels for the input data. The DataFrame must have the following structure:
+    {
+      'Label': list of labels (strings)
+    }
+
+    Returns:
+    - If `y` is not provided, returns the transformed `X` data as a NumPy array.
+    - If `y` is provided, returns a tuple containing the transformed `X` data as a NumPy array and the transformed `y` data as a Pandas DataFrame. The DataFrame has the following structure:
+    {
+      'Correct': list of correct labels (0s and 1s),
+      'Incorrect': list of incorrect labels (0s and 1s)
+    }
+  """
   if not isinstance(X, pd.DataFrame):
     X = {'Name': [X]}
     X = pd.DataFrame(X, index=[0], columns=['Name'])
@@ -52,22 +73,30 @@ def transform_data(X,y):
 
 # predictions data
 def predictions(model, X_test):
-  correct_pred = []
-  incorrect_pred = []
+  """
+    Makes predictions using a model.
+
+    Parameters:
+    - model: A model object.
+    - X_test: A NumPy array containing the input data to use for predictions.
+
+    Returns:
+    - A dictionary containing the predictions. The dictionary has the following structure:
+    {
+      'Correct': list of correct predictions (0s and 1s),
+      'Incorrect': list of incorrect predictions (0s and 1s)
+    }
+  """
   # perform predictions
   pred = model.predict(X_test)
-  for x in pred:
-    # this case means that the model predicts the full name is correct and its confidence is higher than the confidence of the full name being incorrect
-    if x[0] > x[1]:
-      correct_pred.append(1)
-      incorrect_pred.append(0)
-    # this case means that the model predicts the full name is incorrect and its confidence is higher than the confidence of the full name being correct
-    elif x[1] > x[0]:
-      incorrect_pred.append(1)
-      correct_pred.append(0)
+  # this variable means that the model predicts the full name is correct and its confidence is higher than 
+  # the confidence of the full name being incorrect
+  correct_pred = (pred[:, 0] > pred[:, 1]).astype(int)
+  # this variable means that the model predicts the full name is incorrect and its confidence is higher than 
+  # the confidence of the full name being correct
+  incorrect_pred = (pred[:, 1] > pred[:, 0]).astype(int)
   # put predictions into a dictionary under two keys correct and incorrect
-  y_pred = {'Correct': correct_pred, 'Incorrect': incorrect_pred}
-  return y_pred
+  return {'Correct': correct_pred, 'Incorrect': incorrect_pred}
 # create web server app
 app = FastAPI()
 
@@ -88,14 +117,11 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 @app.get("/Inference")
 def Inference(input: str):
-    start_time = time.time()
-    X_test = transform_data(input, None)
-    y_pred = predictions(model, X_test)
-    if y_pred['Correct'][0] == 1:
-        pred = 'Correct'
-    else:
-        pred = 'Incorrect'
-    output = 'The Full Name is: ' + pred
-    end_time = (time.time() - start_time)
-    execution_time = 'Execution Time is: ' + str(end_time)
-    return output , execution_time
+  start_time = time.time()
+  X_test = transform_data(input, None)
+  y_pred = predictions(model, X_test)
+  pred = 'Correct' if y_pred['Correct'][0] == 1 else 'Incorrect'
+  output = f'The Full Name is: {pred}'
+  end_time = time.time() - start_time
+  execution_time = f'Execution Time is: {end_time:.2f} seconds'
+  return output, execution_time
