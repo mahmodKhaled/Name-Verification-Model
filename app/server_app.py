@@ -2,8 +2,13 @@
 import pandas as pd 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense , Embedding, GlobalAveragePooling1D
+from tensorflow.keras.layers import Dense , Embedding
 from tensorflow.keras.models import Sequential
+from tensorflow.keras.utils import pad_sequences
+from tensorflow.keras.layers import GlobalMaxPool1D
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Bidirectional
+from tensorflow.keras.layers import LSTM
 from transformers import AutoTokenizer
 from arabert.preprocess import ArabertPreprocessor
 from fastapi import FastAPI
@@ -13,62 +18,53 @@ import time
 # initialize the model
 def model_init():
     # hyperparameters
-    VOCAB_SIZE = 60000
-    MAX_LEN = 3
+    VOCAB_SIZE = 10000
+    MAX_LEN = 50
     EMBEDDING_DIM = 16
     HIDDEN_SIZE = 32
+    LSTM_SIZE = 16
     NUM_CLASSES = 2
     # architecture
-    model = Sequential([
-        Embedding(input_dim= VOCAB_SIZE, output_dim= EMBEDDING_DIM, input_length= MAX_LEN),
-        GlobalAveragePooling1D(),
-        Dense(units= HIDDEN_SIZE, activation = 'relu'),
-        Dense(units= NUM_CLASSES, activation='softmax')
-    ])
+    model = Sequential()
+    model.add(Embedding(VOCAB_SIZE, EMBEDDING_DIM, input_length=MAX_LEN))
+    model.add(Bidirectional(LSTM(LSTM_SIZE, return_sequences=True)))
+    model.add(GlobalMaxPool1D())
+    model.add(Dense(HIDDEN_SIZE, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(NUM_CLASSES, activation='softmax'))
     model.load_weights('name_verification_model.h5')
     return model
 
 # transform data
 def transform_data(X,y):
-  """
-    Transforms input data for use in a model.
-
+    """
+    This function is used to transform the data into a format that can be used by the model.
+    It will convert the names into ids and pad them to a length of 50.
+    It will also encode the labels into one-hot encoding.
     Parameters:
-    - X: A Pandas DataFrame containing the input data. The DataFrame must have the following structure:
-    {
-      'Name': list of names (strings)
-    }
-    - y: (Optional) A Pandas DataFrame containing the labels for the input data. The DataFrame must have the following structure:
-    {
-      'Label': list of labels (strings)
-    }
-
+    - X: A Pandas DataFrame containing the names.
+    - y: A Pandas DataFrame containing the labels.
     Returns:
-    - If `y` is not provided, returns the transformed `X` data as a NumPy array.
-    - If `y` is provided, returns a tuple containing the transformed `X` data as a NumPy array and the transformed `y` data as a Pandas DataFrame. The DataFrame has the following structure:
-    {
-      'Correct': list of correct labels (0s and 1s),
-      'Incorrect': list of incorrect labels (0s and 1s)
-    }
-  """
-  if not isinstance(X, pd.DataFrame):
-    X = {'Name': [X]}
-    X = pd.DataFrame(X, index=[0], columns=['Name'])
-  # apply preprocessor on the X data
-  X = X['Name'].apply(lambda x: preprocessor.preprocess(x))
-  # convert back to dataframe and reset_index
-  X = pd.DataFrame(X,columns=['Name'])
-  # tokenize X data
-  X = [tokenizer.tokenize(name ,max_length=3, truncation=True) for name in X['Name'].tolist()]
-  # convert tokens in X to ids
-  X = [tokenizer.convert_tokens_to_ids(name) for name in X]
-  # convert into numpy array
-  X = np.array(X)
-  if y is None:
-    return X 
-  else:
-    # encode labels in y data
-    y = pd.get_dummies(y['Label'])
+    - X: A numpy array containing the names in ids format.
+    - y: A numpy array containing the labels in one-hot encoding format.
+    """
+    if not isinstance(X, pd.DataFrame):
+        X = {'Name': [X]}
+        X = pd.DataFrame(X, index=[0], columns=['Name'])
+    def split_word(word):
+        word = word.replace(" ", "")
+        return list(word)
+    # split each name into a list of characters
+    X['Name'] = X['Name'].apply(split_word)
+    # convert tokens in X to ids
+    X['Name'] = X['Name'].apply(lambda x: tokenizer.convert_tokens_to_ids(x))
+    # convert into numpy array
+    X = pad_sequences(X['Name'], maxlen=50, padding='post', truncating='post')
+    if y is None:
+        return X 
+    else:
+        # encode labels in y data
+        y = pd.get_dummies(y['Label'])
     return X, y
 
 # predictions data
