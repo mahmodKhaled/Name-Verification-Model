@@ -107,11 +107,7 @@ model = model_init()
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-@app.get("/Inference")
+@app.get("/API/Name-Verification")
 def Inference(input: str):
   start_time = time.time()
   X_test = transform_data(input, None)
