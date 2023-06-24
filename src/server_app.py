@@ -2,7 +2,7 @@
 import pandas as pd 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense , Embedding
+from tensorflow.keras.layers import Dense, Embedding
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.utils import pad_sequences
 from tensorflow.keras.layers import GlobalMaxPool1D
@@ -12,7 +12,6 @@ from tensorflow.keras.layers import LSTM
 from transformers import AutoTokenizer
 from arabert.preprocess import ArabertPreprocessor
 from fastapi import FastAPI
-from typing import Union
 import time
 
 # initialize the model
