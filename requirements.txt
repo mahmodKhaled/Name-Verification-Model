@@ -5,4 +5,4 @@ arabert
 fastapi
 uvicorn[standard]
 tensorflow
-sklearn
+scikit-learn
