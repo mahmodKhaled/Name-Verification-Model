@@ -1,18 +1,19 @@
 # Imports
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
-from fastapi import FastAPI
+from flask import Flask, request
+
 import time
 from helpers import CustomModel, DataTransformer, ModelEvaluation
 
 # Create web server app
-app = FastAPI()
+app = Flask(__name__)
 
 # Transform data
 model_name = 'aubmindlab/bert-base-arabertv02'
 transformer = DataTransformer(model_name=model_name)
 
-# hyperparameters
+# Hyperparameters
 VOCAB_SIZE = 10000
 MAX_LEN = 50
 EMBEDDING_DIM = 16
@@ -25,26 +26,92 @@ LOSS = BinaryCrossentropy()
 METRICS = ['accuracy']
 
 # Load trained model
-custom_model = CustomModel(OPTIMIZER= OPTIMIZER, LOSS= LOSS, METRICS= METRICS)
-model = custom_model.create_model(VOCAB_SIZE= VOCAB_SIZE, EMBEDDING_DIM= EMBEDDING_DIM, MAX_LEN= MAX_LEN, 
-                                LSTM_SIZE= LSTM_SIZE, HIDDEN_SIZE= HIDDEN_SIZE, NUM_CLASSES= NUM_CLASSES)
+custom_model = CustomModel(OPTIMIZER=OPTIMIZER, LOSS=LOSS, METRICS=METRICS)
+model = custom_model.create_model(VOCAB_SIZE=VOCAB_SIZE, EMBEDDING_DIM=EMBEDDING_DIM, MAX_LEN=MAX_LEN,
+                                  LSTM_SIZE=LSTM_SIZE, HIDDEN_SIZE=HIDDEN_SIZE, NUM_CLASSES=NUM_CLASSES)
 model.load_weights('models/name_verification_model.h5')
 
 # Model Evaluation
 evaluator = ModelEvaluation()
 
-# Get requests
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+# Global variables
+results = []
 
-@app.get("/API/Name-Verification")
-def Inference(input: str):
-  start_time = time.time()
-  X_test = transformer.transform_data(input, None)
-  y_pred = evaluator.predictions(model, X_test)
-  pred = 'Correct' if y_pred['Correct'][0] == 1 else 'Incorrect'
-  output = f'The Full Name is: {pred}'
-  end_time = time.time() - start_time
-  execution_time = f'Execution Time is: {end_time:.2f} seconds'
-  return output, execution_time
+# Define routes
+@app.route("/", methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        input_data = request.form['input']
+        start_time = time.time()
+        X_test = transformer.transform_data(input_data, None)
+        y_pred = evaluator.predictions(model, X_test)
+        pred = 'Correct' if y_pred['Correct'][0] == 1 else 'Incorrect'
+        output = f'The Full Name is: <span style="color: {"green" if pred == "Correct" else "red"};">{pred}</span>'
+        end_time = time.time() - start_time
+        execution_time = f'Execution Time is: {end_time:.2f} seconds'
+        result = {'input': input_data, 'output': output, 'execution_time': execution_time}
+        results.append(result)
+    return """
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+        }
+        
+        form {
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            padding: 5px;
+            font-size: 16px;
+            width: 300px;
+        }
+        
+        input[type="submit"] {
+            padding: 5px 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        strong {
+            font-weight: bold;
+        }
+    </style>
+    <h1>Enter Full Name</h1>
+    <form action="/" method="post">
+        <input type="text" name="input" placeholder="Enter Full Name">
+        <input type="submit" value="Submit">
+    </form>
+    <h2>Results</h2>
+    <ul>
+        """ + "".join([f"""
+        <li>
+            <strong>Input:</strong> {result['input']}<br>
+            <strong>Output:</strong> {result['output']}<br>
+            <strong>Execution Time:</strong> {result['execution_time']}<br>
+        </li>
+        <hr>
+        """ for result in results]) + """
+    </ul>
+    """
+
+# Run the app
+if __name__ == "__main__":
+    app.run()
