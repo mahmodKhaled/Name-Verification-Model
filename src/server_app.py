@@ -1,13 +1,14 @@
 # Imports
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
-from flask import Flask, request
+from flask import Flask, request, session
 
 import time
 from helpers import CustomModel, DataTransformer, ModelEvaluation
 
 # Create web server app
 app = Flask(__name__)
+app.secret_key = "your_secret_key"  # Set a secret key for session
 
 # Transform data
 model_name = 'aubmindlab/bert-base-arabertv02'
@@ -34,12 +35,12 @@ model.load_weights('models/name_verification_model.h5')
 # Model Evaluation
 evaluator = ModelEvaluation()
 
-# Global variables
-results = []
-
 # Define routes
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    if 'results' not in session:
+        session['results'] = []
+
     if request.method == 'POST':
         input_data = request.form['input']
         start_time = time.time()
@@ -50,7 +51,8 @@ def index():
         end_time = time.time() - start_time
         execution_time = f'Execution Time is: {end_time:.2f} seconds'
         result = {'input': input_data, 'output': output, 'execution_time': execution_time}
-        results.append(result)
+        session['results'].append(result)
+
     return """
     <style>
         body {
@@ -94,6 +96,18 @@ def index():
             font-weight: bold;
         }
     </style>
+    <script>
+        // Check if session storage exists
+        if (typeof(Storage) !== "undefined") {
+            // Clear session storage when the page is loaded
+            sessionStorage.clear();
+            
+            // Clear session storage when the tab is closed
+            window.addEventListener('beforeunload', function() {
+                sessionStorage.clear();
+            });
+        }
+    </script>
     <h1>Enter Full Name</h1>
     <form action="/" method="post">
         <input type="text" name="input" placeholder="Enter Full Name">
@@ -108,7 +122,7 @@ def index():
             <strong>Execution Time:</strong> {result['execution_time']}<br>
         </li>
         <hr>
-        """ for result in results]) + """
+        """ for result in session['results']]) + """
     </ul>
     """
 
