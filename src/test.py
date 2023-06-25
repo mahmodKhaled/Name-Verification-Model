@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score
-from src.helpers import CustomModel, DataTransformer
+from helpers import CustomModel, DataTransformer, ModelEvaluation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
 
@@ -30,15 +30,17 @@ METRICS = ['accuracy']
 custom_model = CustomModel(OPTIMIZER= OPTIMIZER, LOSS= LOSS, METRICS= METRICS)
 model = custom_model.create_model(VOCAB_SIZE= VOCAB_SIZE, EMBEDDING_DIM= EMBEDDING_DIM, MAX_LEN= MAX_LEN, 
                                 LSTM_SIZE= LSTM_SIZE, HIDDEN_SIZE= HIDDEN_SIZE, NUM_CLASSES= NUM_CLASSES)
-model.load_model('models/name_verification_model.h5')
+model.load_weights('models/name_verification_model.h5')
 
 # Make predictions
-y_pred = model.predict(X_test)
+evaluator = ModelEvaluation()
+y_pred = evaluator.predictions(model, X_test)
+y_pred = pd.DataFrame(y_pred, columns=['Correct','Incorrect'])
 
 # Evaluate performance
 accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='weighted')
+recall = recall_score(y_test, y_pred, average='weighted')
 
 # Print performance metrics
 print("Performance Metrics:")
