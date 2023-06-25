@@ -2,8 +2,8 @@ numpy
 pandas
 transformers
 arabert
-fastapi
 uvicorn[standard]
 tensorflow
 scikit-learn
 matplotlib
+flask
