@@ -1,21 +1,21 @@
 import pandas as pd
-import sklearn as sk
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 # Load test data
-test_data = pd.read_csv('test_data.csv')
-X_test = test_data.drop('target', axis=1)
+test_data = pd.read_csv('input/processed_data/test_data.csv')
+X_test = test_data.drop(columns=[''], axis=1)
 y_test = test_data['target']
 
 # Load trained model
 model = YourModelClass()
-model.load_model('trained_model.pth')
+model.load_model('models/name_verification_model.h5')
 
 # Make predictions
 y_pred = model.predict(X_test)
 
 # Evaluate performance
-accuracy = sk.metrics.accuracy_score(y_test, y_pred)
-precision = sk.metrics.precision_score(y_test, y_pred)
-recall = sk.metrics.recall_score(y_test, y_pred)
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
 
 # Print performance metrics
 print("Performance Metrics:")
