@@ -5,4 +5,4 @@ RUN pip install -r requirements.txt
 EXPOSE 80
 COPY src/ /home/src
 COPY models/ /home/src/models
-CMD ["uvicorn", "server_app:app","--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "server_app.py"]
