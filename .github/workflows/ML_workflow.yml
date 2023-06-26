@@ -39,13 +39,13 @@ jobs:
 
     steps:
       - name: Check accuracy
+        id: accuracy
         run: |
           accuracy=$(echo "${{ needs.run_tests.outputs.accuracy }}")
           if (( $(echo "$accuracy < 0.94" | bc -l) )); then
-            echo "Accuracy is below 94%. Rejecting the push."
-            exit 1
+            echo "::set-output name=accuracy_pass::false"
           else
-            echo "Accuracy is above 94%. Accepting Model's Accuracy."
+            echo "::set-output name=accuracy_pass::true"
           fi
 
   check_precision:
@@ -54,13 +54,13 @@ jobs:
 
     steps:
       - name: Check precision
+        id: precision
         run: |
           precision=$(echo "${{ needs.run_tests.outputs.precision }}")
           if (( $(echo "$precision < 0.94" | bc -l) )); then
-            echo "Precision is below 94%. Rejecting the push."
-            exit 1
+            echo "::set-output name=precision_pass::false"
           else
-            echo "Precision is above 94%. Accepting Model's Precision."
+            echo "::set-output name=precision_pass::true"
           fi
 
   check_recall:
@@ -69,13 +69,13 @@ jobs:
 
     steps:
       - name: Check recall
+        id: recall
         run: |
           recall=$(echo "${{ needs.run_tests.outputs.recall }}")
           if (( $(echo "$recall < 0.94" | bc -l) )); then
-            echo "Recall is below 94%. Rejecting the push."
-            exit 1
+            echo "::set-output name=recall_pass::false"
           else
-            echo "Recall is above 94%. Accepting Model's Recall."
+            echo "::set-output name=recall_pass::true"
           fi
 
   final_decision:
@@ -86,7 +86,11 @@ jobs:
       - name: Set final decision
         id: decision
         run: |
-          if [[ "${{ needs.check_accuracy.result }}" == 'success' ]] && [[ "${{ needs.check_precision.result }}" == 'success' ]] && [[ "${{ needs.check_recall.result }}" == 'success' ]]; then
+          accuracy_pass=$(echo "${{ needs.check_accuracy.outputs.accuracy_pass }}")
+          precision_pass=$(echo "${{ needs.check_precision.outputs.precision_pass }}")
+          recall_pass=$(echo "${{ needs.check_recall.outputs.recall_pass }}")
+
+          if [[ "$accuracy_pass" == 'true' && "$precision_pass" == 'true' && "$recall_pass" == 'true' ]]; then
             echo "All metrics are above 94%. Accepting the push."
             echo "::set-output name=accept_push::true"
           else
