@@ -3,6 +3,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from helpers import CustomModel, DataTransformer, ModelEvaluation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
+import sys
 
 # Load test data
 test_data = pd.read_csv('input/processed_data/test_data.csv')
@@ -49,3 +50,8 @@ print("Accuracy: {:.2f}%".format(accuracy * 100))
 print("Precision: {:.2f}%".format(precision * 100))
 print("Recall: {:.2f}%".format(recall * 100))
 print("----------------------------")
+
+# Send metrics as outputs
+sys.stdout.write(f"::set-output name=accuracy::{accuracy}")
+sys.stdout.write(f"::set-output name=precision::{precision}")
+sys.stdout.write(f"::set-output name=recall::{recall}")

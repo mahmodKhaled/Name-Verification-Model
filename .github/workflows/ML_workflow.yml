@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  test_model:
+  run_tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,4 +26,69 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests
-        run: python src/test.py
+        id: test
+        run: |
+          python src/test.py
+          echo "::set-output name=accuracy::$(cat accuracy.txt)"
+          echo "::set-output name=precision::$(cat precision.txt)"
+          echo "::set-output name=recall::$(cat recall.txt)"
+
+  check_accuracy:
+    needs: run_tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check accuracy
+        run: |
+          accuracy=$(echo "${{ needs.run_tests.outputs.accuracy }}")
+          if (( $(echo "$accuracy < 0.94" | bc -l) )); then
+            echo "Accuracy is below 94%. Rejecting the push."
+            exit 1
+          else
+            echo "Accuracy is above 94%. Accepting Model's Accuracy."
+          fi
+
+  check_precision:
+    needs: run_tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check precision
+        run: |
+          precision=$(echo "${{ needs.run_tests.outputs.precision }}")
+          if (( $(echo "$precision < 0.94" | bc -l) )); then
+            echo "Precision is below 94%. Rejecting the push."
+            exit 1
+          else
+            echo "Precision is above 94%. Accepting Model's Precision."
+          fi
+
+  check_recall:
+    needs: run_tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check recall
+        run: |
+          recall=$(echo "${{ needs.run_tests.outputs.recall }}")
+          if (( $(echo "$recall < 0.94" | bc -l) )); then
+            echo "Recall is below 94%. Rejecting the push."
+            exit 1
+          else
+            echo "Recall is above 94%. Accepting Model's Recall."
+          fi
+
+  final_decision:
+    needs: [check_accuracy, check_precision, check_recall]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set final decision
+        id: decision
+        run: |
+          if [[ "${{ needs.check_accuracy.result }}" == 'success' ]] && [[ "${{ needs.check_precision.result }}" == 'success' ]] && [[ "${{ needs.check_recall.result }}" == 'success' ]]; then
+            echo "All metrics are above 94%. Accepting the push."
+            echo "::set-output name=accept_push::true"
+          else
+            echo "Metrics are below 94%. Rejecting the push."
+            echo "::set-output name=accept_push::false"
