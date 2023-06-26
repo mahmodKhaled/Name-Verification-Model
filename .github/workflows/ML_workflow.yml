@@ -43,8 +43,11 @@ jobs:
         run: |
           accuracy=$(echo "${{ needs.run_tests.outputs.accuracy }}")
           if (( $(echo "$accuracy < 0.94" | bc -l) )); then
+            echo "Accuracy is below 94%. Accuracy of the model is not Accepted."
             echo "::set-output name=accuracy_pass::false"
+            exit 1
           else
+            echo "Accuracy is above 94%. Accuracy of the model is Accepted."
             echo "::set-output name=accuracy_pass::true"
           fi
 
@@ -58,8 +61,11 @@ jobs:
         run: |
           precision=$(echo "${{ needs.run_tests.outputs.precision }}")
           if (( $(echo "$precision < 0.94" | bc -l) )); then
+            echo "Precision is below 94%. Precision of the model is not Accepted."
             echo "::set-output name=precision_pass::false"
+            exit 1
           else
+            echo "Precision is above 94%. Precision of the model is Accepted."
             echo "::set-output name=precision_pass::true"
           fi
 
@@ -73,8 +79,11 @@ jobs:
         run: |
           recall=$(echo "${{ needs.run_tests.outputs.recall }}")
           if (( $(echo "$recall < 0.94" | bc -l) )); then
+            echo "Recall is below 94%. Recall of the model is not Accepted."
             echo "::set-output name=recall_pass::false"
+            exit 1
           else
+            echo "Recall is above 94%. Recall of the model is Accepted."
             echo "::set-output name=recall_pass::true"
           fi
 
@@ -96,4 +105,5 @@ jobs:
           else
             echo "Metrics are below 94%. Rejecting the push."
             echo "::set-output name=accept_push::false"
+            exit 1
           fi
