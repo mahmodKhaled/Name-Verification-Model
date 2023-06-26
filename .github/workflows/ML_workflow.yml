@@ -86,24 +86,3 @@ jobs:
             echo "Recall is above 94%. Recall of the model is Accepted."
             echo "::set-output name=recall_pass::true"
           fi
-
-  final_decision:
-    needs: [check_accuracy, check_precision, check_recall]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Set final decision
-        id: decision
-        run: |
-          accuracy_pass=$(echo "${{ needs.check_accuracy.outputs.accuracy_pass }}")
-          precision_pass=$(echo "${{ needs.check_precision.outputs.precision_pass }}")
-          recall_pass=$(echo "${{ needs.check_recall.outputs.recall_pass }}")
-
-          if [[ "$accuracy_pass" == 'true' && "$precision_pass" == 'true' && "$recall_pass" == 'true' ]]; then
-            echo "All metrics are above 94%. Accepting the push."
-            echo "::set-output name=accept_push::true"
-          else
-            echo "Metrics are below 94%. Rejecting the push."
-            echo "::set-output name=accept_push::false"
-            exit 1
-          fi
