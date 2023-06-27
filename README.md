@@ -5,6 +5,9 @@
 <div align="center">
   
 [![Last Commit](https://img.shields.io/github/last-commit/mahmodKhaled/Name-Verification-Model)](https://github.com/mahmodKhaled/Name-Verification-Model/commits/main)
+![Lines of code](https://img.shields.io/tokei/lines/github/mahmodKhaled/Name-Verification-Model)
+![GitHub repo size](https://img.shields.io/github/repo-size/mahmodKhaled/Name-Verification-Model)
+
 </div>
 
 ## Description
