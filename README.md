@@ -1,4 +1,12 @@
 # Name-Verification-Model
+
+<p align="center">NLP project to detect typos in Arabic names.</p>
+
+<div align="center">
+  
+[![Last Commit](https://img.shields.io/github/last-commit/mahmodKhaled/Name-Verification-Model)](https://github.com/mahmodKhaled/Name-Verification-Model/commits/main)
+</div>
+
 ## Description
 The task is divided into multiple stages (Data generation - Core model - Interface - containerization).
 The core stage of the task pipeline is name verification model with confidence threshold of how much the
@@ -8,14 +16,14 @@ For example:
 1. The name "باسم وحيد السيد" is a real name with high confidence.
 2. The name "باسمم وحةد السد" “is a real name with low confidence.
 
-## Datasets Source Links
+## Datasets Source Links 📁
 The datasets source is the same source you provided to me in the task description PDF
 
 ```
 https://drive.google.com/drive/folders/1rW6vtJ_niYLao1YrYD0D4psAaqt0tMyh
 ```
 
-## Instructions
+## Instructions 📝
 
 ### How to build the docker image
 To build the Docker Image we should execute the following docker-compose command
